@@ -13,21 +13,35 @@ Console.WriteLine(response.Message);
 
 Console.WriteLine();
 
+var metadata = new Metadata
+{
+    { "Guid", Guid.NewGuid().ToString() },
+    { "Name", "" },
+    { "DOB", "26/05/1998" }
+};
 var customerClient = new Customer.CustomerClient(channel);
-var customer = await customerClient.GetCustomerByIdAsync(new CustomerRequest { Id = 1 });
+var customer = await customerClient.GetCustomerByIdAsync(new CustomerRequest { Id = 1 }, metadata);
 Console.WriteLine($"{customer.FirstName} {customer.LastName}");
 
 Console.WriteLine();
 Console.WriteLine("All customers list:");
 Console.WriteLine();
 
-using(var call = customerClient.GetAllCustomers(new CustomerStreamRequest()))
+try
 {
-    while (await call.ResponseStream.MoveNext())
+    using (var call = customerClient.GetAllCustomers(new CustomerStreamRequest(),
+            deadline: DateTime.UtcNow.AddSeconds(5)))
     {
-        var currentCustomer = call.ResponseStream.Current;
-        Console.WriteLine($"{currentCustomer.FirstName} {currentCustomer.LastName}: {currentCustomer.Age}");
+        while (await call.ResponseStream.MoveNext())
+        {
+            var currentCustomer = call.ResponseStream.Current;
+            Console.WriteLine($"{currentCustomer.FirstName} {currentCustomer.LastName}: {currentCustomer.Age}");
+        }
     }
+}
+catch(RpcException ex) when (ex.StatusCode == StatusCode.DeadlineExceeded)
+{
+    Console.WriteLine(ex.Message);
 }
 
 Console.ReadLine();

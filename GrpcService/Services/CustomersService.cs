@@ -14,8 +14,10 @@ namespace GrpcService.Services
         public override Task<CustomerInfoModel> GetCustomerById(CustomerRequest request, ServerCallContext context)
         {
             CustomerInfoModel customerInfo = new CustomerInfoModel();
+            var Name = context.RequestHeaders.GetValue("name");
+            var guid = context.RequestHeaders.GetValue("guid");
 
-            if(request.Id == 1)
+            if (request.Id == 1)
             {
                 customerInfo.FirstName = "Firoz";
                 customerInfo.LastName = "Chowki";
